@@ -108,8 +108,8 @@ describe("swap_remi", () => {
   it("Initialize pool", async () => {
     const price = new anchor.BN(10)
     const tx1 = await program.methods.initialize(price).accounts({
-      mintAccToken0: mintAccToken0,
-      mintAccToken1: mintAccToken1,
+      mintAccToken0: mintAccToken0 < mintAccToken1 ? mintAccToken0 : mintAccToken1,
+      mintAccToken1: mintAccToken0 < mintAccToken1 ? mintAccToken1 : mintAccToken0,
       poolState: poolStateAddr,
       poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
