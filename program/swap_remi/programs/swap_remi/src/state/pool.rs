@@ -5,9 +5,10 @@ use crate::constants::*;
 pub struct PoolState {
     pub mint_acc_token_0: Pubkey,
     pub mint_acc_token_1: Pubkey,
-    pub price: u128,
+    pub price: u64,
     pub pool_wallet_token_0: Pubkey,
-    pub pool_wallet_token_1: Pubkey
+    pub pool_wallet_token_1: Pubkey,
+    pub bump: u8
 }
 
 impl PoolState {
@@ -15,7 +16,8 @@ impl PoolState {
         DISCRIMINATOR_LENGTH +
         PUBLIC_KEY_LENGTH +
         PUBLIC_KEY_LENGTH +
-        U128_LENGTH +
+        U64_LENGTH +
         PUBLIC_KEY_LENGTH +
-        PUBLIC_KEY_LENGTH;
+        PUBLIC_KEY_LENGTH +
+        U8_LENGTH;
 }

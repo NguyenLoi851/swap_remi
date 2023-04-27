@@ -3,13 +3,14 @@ use anchor_lang::prelude::*;
 use crate::state::PoolState;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-pub fn initialize(ctx: Context<Initialize>, price: u128) -> Result<()> {
+pub fn initialize(ctx: Context<Initialize>, price: u64) -> Result<()> {
     let state = &mut ctx.accounts.pool_state;
     state.mint_acc_token_0 = ctx.accounts.mint_acc_token_0.key().clone();
     state.mint_acc_token_1 = ctx.accounts.mint_acc_token_1.key().clone();
     state.price = price;
     state.pool_wallet_token_0 = ctx.accounts.pool_wallet_token_0.key().clone();
     state.pool_wallet_token_1 = ctx.accounts.pool_wallet_token_1.key().clone();
+    state.bump = *ctx.bumps.get("pool_state").unwrap();
     Ok(())
 }
 
