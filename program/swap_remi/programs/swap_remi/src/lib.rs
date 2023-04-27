@@ -12,11 +12,18 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod swap_remi {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, price: u128) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>, price: u64) -> Result<()> {
         instructions::initialize(ctx, price)?;
         Ok(())
     }
-}
 
-// #[derive(Accounts)]
-// pub struct Initialize {}
+    pub fn deposit(ctx: Context<Deposit>, amount_0: u64, amount_1: u64) -> Result<()> {
+        instructions::deposit(ctx, amount_0, amount_1)?;
+        Ok(())
+    }
+
+    pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()>{
+        instructions::swap(ctx, amount_0, amount_1)?;
+        Ok(())
+    }
+}
