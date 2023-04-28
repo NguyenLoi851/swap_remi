@@ -4,9 +4,9 @@ use anchor_spl::token::{Token, TokenAccount, Transfer};
 use crate::errors::SwapError;
 use crate::state::PoolState;
 
-// If amount_0 > 0, swap from token_0 to token_1
+// If amount_0 > 0, swap from SOL to token_1
 // and vice versa
-// 1 (token_0) = 1 (token_1) * price
+// 1 (SOL) = 1 (token_1) * price
 pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
     // Check valid swap direction
     if (amount_0 == 0 && amount_1 == 0) || (amount_0 > 0 && amount_1 > 0) {
@@ -18,9 +18,9 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
     let price = pool_state.price;
     let amount_in = if amount_0 > 0 { amount_0 } else { amount_1 };
     let amount_out = if amount_in == amount_0 {
-        amount_in * price
+        amount_in / (10_i32.pow(9)) as u64 * price * (10_i32.pow(pool_state.decimal_token_1.into()) as u64)
     } else {
-        amount_in / price
+        amount_in / (10_i32.pow(pool_state.decimal_token_1.into()) as u64) / price * (10_i32.pow(9)) as u64
     };
 
     // swap from SOL to token
@@ -30,7 +30,7 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
                 from: ctx.accounts.sender.to_account_info(),
-                to: ctx.accounts.pool_state.to_account_info(),
+                to: ctx.accounts.pool_wallet_sol.to_account_info(),
             },
         );
 
@@ -43,7 +43,7 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
             authority: pool_state.to_account_info(),
         };
 
-        let bump_vector = pool_state.bump.to_le_bytes();
+        let bump_vector = pool_state.state_bump.to_le_bytes();
 
         let signer_seeds = vec![
             b"state".as_ref(),
@@ -79,11 +79,10 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
 
         // pool transfer SOL to sender
 
-        let bump_vector = pool_state.bump.to_le_bytes();
+        let bump_vector = pool_state.wallet_sol_bump.to_le_bytes();
 
         let signer_seeds = vec![
-            b"state".as_ref(),
-            pool_state.mint_acc_token_1.as_ref(),
+            b"wallet_sol".as_ref(),
             bump_vector.as_ref(),
         ];
         
@@ -92,12 +91,20 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
         let cpi_ctx = CpiContext::new_with_signer(
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
-                from: ctx.accounts.pool_state.to_account_info(),
+                from: ctx.accounts.pool_wallet_sol.to_account_info(),
                 to: ctx.accounts.sender.to_account_info(),
             },
             signer_seeds_vector.as_slice(),
         );
 
+        // let cpi_ctx = CpiContext::new(
+        //     ctx.accounts.system_program.to_account_info(),
+        //     system_program::Transfer {
+        //         from: ctx.accounts.pool_wallet_sol.to_account_info(),
+        //         to: ctx.accounts.sender.to_account_info(),
+        //     },
+        // );
+  
         system_program::transfer(cpi_ctx, amount_out)?;
     }
 
@@ -111,6 +118,12 @@ pub struct Swap<'info> {
 
     #[account(mut)]
     pool_state: Account<'info, PoolState>,
+
+    #[account(
+        mut,
+        constraint = pool_wallet_sol.key() == pool_state.pool_wallet_sol
+    )]
+    pool_wallet_sol: SystemAccount<'info>,
 
     #[account(mut)]
     token_acc_1: Account<'info, TokenAccount>,

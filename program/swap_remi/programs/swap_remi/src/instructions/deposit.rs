@@ -11,7 +11,7 @@ pub fn deposit(ctx: Context<Deposit>, amount_0: u64, amount_1: u64) -> Result<()
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
                 from: ctx.accounts.sender.to_account_info(),
-                to: ctx.accounts.pool_state.to_account_info(),
+                to: ctx.accounts.pool_wallet_sol.to_account_info(),
             },
         );
         system_program::transfer(cpi_ctx, amount_0)?;
@@ -43,6 +43,12 @@ pub struct Deposit<'info> {
 
     #[account(mut)]
     pool_state: Account<'info, PoolState>,
+
+    #[account(
+        mut,
+        constraint = pool_wallet_sol.key() == pool_state.pool_wallet_sol
+    )]
+    pool_wallet_sol: SystemAccount<'info>,
 
     #[account(mut)]
     token_acc_1: Account<'info, TokenAccount>,
