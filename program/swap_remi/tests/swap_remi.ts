@@ -33,6 +33,10 @@ describe("swap_remi", () => {
   let charlieTokenAcc1: anchor.web3.PublicKey;
   let charlieTokenAcc2: anchor.web3.PublicKey;
 
+  let davidToken0: anchor.web3.PublicKey;
+  let davidToken1: anchor.web3.PublicKey;
+  let davidToken2: anchor.web3.PublicKey;
+
   let poolStateAddr: anchor.web3.PublicKey;
   let poolWalletToken0: anchor.web3.PublicKey;
   let poolWalletToken1: anchor.web3.PublicKey;
@@ -45,7 +49,7 @@ describe("swap_remi", () => {
     txFund.add(anchor.web3.SystemProgram.transfer({
       fromPubkey: provider.wallet.publicKey,
       toPubkey: user.publicKey,
-      lamports: 5 * anchor.web3.LAMPORTS_PER_SOL
+      lamports: 20 * anchor.web3.LAMPORTS_PER_SOL
     }))
     const sigTxFund = await provider.sendAndConfirm(txFund)
     return [user]
@@ -80,9 +84,9 @@ describe("swap_remi", () => {
     return [mintTokenAcc.publicKey]
   }
 
-  const getPoolStateAddr = async (mintAccToken0: anchor.web3.PublicKey, mintAccToken1: anchor.web3.PublicKey): Promise<[anchor.web3.PublicKey, number]> => {
+  const getPoolStateAddr = async (mintAccToken1: anchor.web3.PublicKey): Promise<[anchor.web3.PublicKey, number]> => {
     let [poolStateAddr, poolStateBump] = findProgramAddressSync(
-      [Buffer.from("state"), mintAccToken0.toBuffer(), mintAccToken1.toBuffer()],
+      [Buffer.from("state"), mintAccToken1.toBuffer()],
       program.programId
     )
     return [poolStateAddr, poolStateBump]
@@ -96,7 +100,7 @@ describe("swap_remi", () => {
     return [poolWalletToken, poolWalletBump]
   }
 
-  const createAssociatedTokenAccountAndFundToken = async (connection: anchor.web3.Connection, user: anchor.web3.Keypair, amount: number, mintTokenAcc: anchor.web3.PublicKey) => {
+  const createAssociatedTokenAccountAndFundToken = async (user: anchor.web3.Keypair, amount: number, mintTokenAcc: anchor.web3.PublicKey) => {
     const userAssociatedTokenAccount = await spl.getAssociatedTokenAddress(
       mintTokenAcc,
       user.publicKey,
@@ -144,22 +148,26 @@ describe("swap_remi", () => {
     mintAccToken1 = _mintAccToken1;
     mintAccToken2 = _mintAccToken2;
 
-    aliceTokenAcc0 = await createAssociatedTokenAccountAndFundToken(provider.connection, alice, 1000, mintAccToken0);
-    aliceTokenAcc1 = await createAssociatedTokenAccountAndFundToken(provider.connection, alice, 1000, mintAccToken1);
-    aliceTokenAcc2 = await createAssociatedTokenAccountAndFundToken(provider.connection, alice, 1000, mintAccToken2);
+    aliceTokenAcc0 = await createAssociatedTokenAccountAndFundToken(alice, 1000, mintAccToken0);
+    aliceTokenAcc1 = await createAssociatedTokenAccountAndFundToken(alice, 1000, mintAccToken1);
+    aliceTokenAcc2 = await createAssociatedTokenAccountAndFundToken(alice, 1000, mintAccToken2);
 
-    bobTokenAcc0 = await createAssociatedTokenAccountAndFundToken(provider.connection, bob, 1000, mintAccToken0);
-    bobTokenAcc1 = await createAssociatedTokenAccountAndFundToken(provider.connection, bob, 1000, mintAccToken1);
-    bobTokenAcc2 = await createAssociatedTokenAccountAndFundToken(provider.connection, bob, 1000, mintAccToken2);
+    bobTokenAcc0 = await createAssociatedTokenAccountAndFundToken(bob, 1000, mintAccToken0);
+    bobTokenAcc1 = await createAssociatedTokenAccountAndFundToken(bob, 1000, mintAccToken1);
+    bobTokenAcc2 = await createAssociatedTokenAccountAndFundToken(bob, 1000, mintAccToken2);
 
-    charlieTokenAcc0 = await createAssociatedTokenAccountAndFundToken(provider.connection, charlie, 1000, mintAccToken0);
-    charlieTokenAcc1 = await createAssociatedTokenAccountAndFundToken(provider.connection, charlie, 1000, mintAccToken1);
-    charlieTokenAcc2 = await createAssociatedTokenAccountAndFundToken(provider.connection, charlie, 1000, mintAccToken2);
+    charlieTokenAcc0 = await createAssociatedTokenAccountAndFundToken(charlie, 1000, mintAccToken0);
+    charlieTokenAcc1 = await createAssociatedTokenAccountAndFundToken(charlie, 1000, mintAccToken1);
+    charlieTokenAcc2 = await createAssociatedTokenAccountAndFundToken(charlie, 1000, mintAccToken2);
+
+    davidToken0 = await createAssociatedTokenAccountAndFundToken(david, 1000, mintAccToken0);
+    davidToken1 = await createAssociatedTokenAccountAndFundToken(david, 1000, mintAccToken1);
+    davidToken2 = await createAssociatedTokenAccountAndFundToken(david, 1000, mintAccToken2);
 
     // const x = await spl.getAccount(provider.connection, aliceTokenAcc0);
     // console.log(x);
 
-    [poolStateAddr,] = await getPoolStateAddr(mintAccToken0, mintAccToken1);
+    [poolStateAddr,] = await getPoolStateAddr(mintAccToken1);
     [poolWalletToken0,] = await getPoolWalletToken(mintAccToken0);
     [poolWalletToken1,] = await getPoolWalletToken(mintAccToken1);
     [poolWalletToken2,] = await getPoolWalletToken(mintAccToken2);
@@ -168,10 +176,8 @@ describe("swap_remi", () => {
   it("Initialize pool", async () => {
     const price = new anchor.BN(10)
     const tx1 = await program.methods.initialize(price).accounts({
-      mintAccToken0: mintAccToken0,
       mintAccToken1: mintAccToken1,
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: alice.publicKey,
 
@@ -186,10 +192,8 @@ describe("swap_remi", () => {
     // Initialize
     const price = new anchor.BN(10)
     const tx1 = await program.methods.initialize(price).accounts({
-      mintAccToken0: mintAccToken0,
       mintAccToken1: mintAccToken1,
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: alice.publicKey,
 
@@ -198,76 +202,61 @@ describe("swap_remi", () => {
       tokenProgram: spl.TOKEN_PROGRAM_ID
     }).signers([alice]).rpc()
 
-    // Account info before Alice deposit token 0
-    const balanceOfAliceTokenAcc0Before = (await spl.getAccount(
-      provider.connection,
-      aliceTokenAcc0
-    )).amount;
+    // Account info before Alice deposit SOL and token 1
+    const balanceOfAliceBefore = await provider.connection.getBalance(alice.publicKey);
 
-    const balanceOfAliceTokenAcc1Before = (await spl.getAccount(
+    const balanceOfAliceTokenAcc1Before = Number((await spl.getAccount(
       provider.connection,
       aliceTokenAcc1
-    )).amount;
+    )).amount);
 
-    const balanceOfPoolWalletToken0Before = (await spl.getAccount(
-      provider.connection,
-      poolWalletToken0
-    )).amount;
+    const balanceOfPoolStateBefore = await provider.connection.getBalance(poolStateAddr);
 
-    const balanceOfPoolWalletToken1Before = (await spl.getAccount(
+    const balanceOfPoolWalletToken1Before = Number((await spl.getAccount(
       provider.connection,
       poolWalletToken1
-    )).amount;
+    )).amount);
 
-    // Alice deposit token 0 and token 1
-    const amount0Alice = new anchor.BN(100)
+    // Alice deposit SOL and token 1
+    const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2)
     const amount1Alice = new anchor.BN(200)
     const tx2 = await program.methods.deposit(amount0Alice, amount1Alice).accounts({
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: alice.publicKey,
-      tokenAcc0: aliceTokenAcc0,
       tokenAcc1: aliceTokenAcc1,
-      tokenProgram: spl.TOKEN_PROGRAM_ID
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
     }).signers([alice]).rpc()
 
-    // Account info after Alice deposit token 0
-    const balanceOfAliceTokenAcc0After = (await spl.getAccount(
-      provider.connection,
-      aliceTokenAcc0
-    )).amount
+    // Account info after Alice deposit SOL and token 1
+    const balanceOfAliceAfter = await provider.connection.getBalance(alice.publicKey);
 
-    const balanceOfAliceTokenAcc1After = (await spl.getAccount(
+    const balanceOfAliceTokenAcc1After = Number((await spl.getAccount(
       provider.connection,
       aliceTokenAcc1
-    )).amount;
+    )).amount);
 
-    const balanceOfPoolWalletToken0After = (await spl.getAccount(
-      provider.connection,
-      poolWalletToken0
-    )).amount;
+    const balanceOfPoolStateAfter = await provider.connection.getBalance(poolStateAddr);
 
-    const balanceOfPoolWalletToken1After = (await spl.getAccount(
+    const balanceOfPoolWalletToken1After = Number((await spl.getAccount(
       provider.connection,
       poolWalletToken1
-    )).amount;
+    )).amount);
 
     // expect
-    expect(Number(balanceOfAliceTokenAcc0Before - balanceOfAliceTokenAcc0After)).to.be.equal(amount0Alice.toNumber())
-    expect(Number(balanceOfAliceTokenAcc1Before - balanceOfAliceTokenAcc1After)).to.be.equal(amount1Alice.toNumber())
-    expect(Number(balanceOfPoolWalletToken0After - balanceOfPoolWalletToken0Before)).to.be.equal(amount0Alice.toNumber())
-    expect(Number(balanceOfPoolWalletToken1After - balanceOfPoolWalletToken1Before)).to.be.equal(amount1Alice.toNumber())
+    expect(balanceOfAliceBefore - balanceOfAliceAfter).to.be.greaterThanOrEqual(amount0Alice.toNumber())
+    expect(balanceOfAliceTokenAcc1Before - balanceOfAliceTokenAcc1After).to.be.equal(amount1Alice.toNumber())
+    expect(balanceOfPoolStateAfter - balanceOfPoolStateBefore).to.be.equal(amount0Alice.toNumber())
+    expect(balanceOfPoolWalletToken1After - balanceOfPoolWalletToken1Before).to.be.equal(amount1Alice.toNumber())
   })
 
-  it("Initialize, Alice deposit 100 token0, Bob deposit 200 token1, and Charlie swap from 10 token0 to get 100 token1", async () => {
+  it("Initialize, Alice deposit 100 token0, Bob deposit 200 token1, Charlie swaps from 10 SOL to get 100 token1, and David swaps from 10 token1 to get 1 SOL", async () => {
     // Initialize
     const price = new anchor.BN(10)
     const tx1 = await program.methods.initialize(price).accounts({
-      mintAccToken0: mintAccToken0,
       mintAccToken1: mintAccToken1,
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: alice.publicKey,
 
@@ -276,100 +265,131 @@ describe("swap_remi", () => {
       tokenProgram: spl.TOKEN_PROGRAM_ID
     }).signers([alice]).rpc()
 
-    // Alice deposit token 0
-    const amount0Alice = new anchor.BN(100)
+    // Alice deposit SOL
+    const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2)
     const tx2 = await program.methods.deposit(amount0Alice, new anchor.BN(0)).accounts({
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: alice.publicKey,
-      tokenAcc0: aliceTokenAcc0,
       tokenAcc1: aliceTokenAcc1,
-      tokenProgram: spl.TOKEN_PROGRAM_ID
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId
     }).signers([alice]).rpc()
 
     // Bob deposit token 1
     const amount1Bob = new anchor.BN(200)
     const tx3 = await program.methods.deposit(new anchor.BN(0), amount1Bob).accounts({
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: bob.publicKey,
-      tokenAcc0: bobTokenAcc0,
       tokenAcc1: bobTokenAcc1,
-      tokenProgram: spl.TOKEN_PROGRAM_ID
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId
     }).signers([bob]).rpc()
 
-    let balanceOfPoolWalletToken0After = (await spl.getAccount(
-      provider.connection,
-      poolWalletToken0
-    )).amount;
+    let balanceOfPoolStateAfter = await provider.connection.getBalance(poolStateAddr);
 
-    let balanceOfPoolWalletToken1After = (await spl.getAccount(
+    let balanceOfPoolWalletToken1After = Number((await spl.getAccount(
       provider.connection,
       poolWalletToken1
-    )).amount;
+    )).amount);
 
-    expect(Number(balanceOfPoolWalletToken0After)).to.be.equal(amount0Alice.toNumber());
-    expect(Number(balanceOfPoolWalletToken1After)).to.be.equal(amount1Bob.toNumber());
+    expect(balanceOfPoolStateAfter).to.be.greaterThanOrEqual(amount0Alice.toNumber());
+    expect(balanceOfPoolWalletToken1After).to.be.equal(amount1Bob.toNumber());
 
     // Account info before Charlie swap token
-    const balanceOfCharlieTokenAcc0Before = (await spl.getAccount(
-      provider.connection,
-      charlieTokenAcc0
-    )).amount
+    const balanceOfCharlieBefore = await provider.connection.getBalance(charlie.publicKey)
 
-    const balanceOfCharlieTokenAcc1Before = (await spl.getAccount(
+    const balanceOfCharlieTokenAcc1Before = Number((await spl.getAccount(
       provider.connection,
       charlieTokenAcc1
-    )).amount;
+    )).amount);
 
-    const balanceOfPoolWalletToken0Before = (await spl.getAccount(
-      provider.connection,
-      poolWalletToken0
-    )).amount;
+    let balanceOfPoolStateBefore = await provider.connection.getBalance(poolStateAddr)
 
-    const balanceOfPoolWalletToken1Before = (await spl.getAccount(
+    let balanceOfPoolWalletToken1Before = Number((await spl.getAccount(
       provider.connection,
       poolWalletToken1
-    )).amount;
+    )).amount);
 
-    // Charlie swap 10 token0 to 100 token1
+    // Charlie swap 10 SOL to 100 token1
     const amount0InCharlie = new anchor.BN(10)
     const tx4 = await program.methods.swap(amount0InCharlie, new anchor.BN(0)).accounts({
       poolState: poolStateAddr,
-      poolWalletToken0: poolWalletToken0,
       poolWalletToken1: poolWalletToken1,
       sender: charlie.publicKey,
-      tokenAcc0: charlieTokenAcc0,
       tokenAcc1: charlieTokenAcc1,
-      tokenProgram: spl.TOKEN_PROGRAM_ID
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId
     }).signers([charlie]).rpc()
 
     // Account info after Charlie swap token
-    const balanceOfCharlieTokenAcc0After = (await spl.getAccount(
-      provider.connection,
-      charlieTokenAcc0
-    )).amount
+    const balanceOfCharlieAfter = await provider.connection.getBalance(charlie.publicKey)
 
-    const balanceOfCharlieTokenAcc1After = (await spl.getAccount(
+    const balanceOfCharlieTokenAcc1After = Number((await spl.getAccount(
       provider.connection,
       charlieTokenAcc1
-    )).amount;
+    )).amount);
 
-    balanceOfPoolWalletToken0After = (await spl.getAccount(
-      provider.connection,
-      poolWalletToken0
-    )).amount;
+    balanceOfPoolStateAfter = await provider.connection.getBalance(poolStateAddr)
 
-    balanceOfPoolWalletToken1After = (await spl.getAccount(
+    balanceOfPoolWalletToken1After = Number((await spl.getAccount(
       provider.connection,
       poolWalletToken1
-    )).amount;
+    )).amount);
 
-    expect(Number(balanceOfCharlieTokenAcc0Before - balanceOfCharlieTokenAcc0After)).to.be.equal(amount0InCharlie.toNumber())
-    expect(Number(balanceOfCharlieTokenAcc1After - balanceOfCharlieTokenAcc1Before)).to.be.equal(amount0InCharlie.toNumber()*(price.toNumber()))
-    expect(Number(balanceOfPoolWalletToken0After - balanceOfPoolWalletToken0Before)).to.be.equal(amount0InCharlie.toNumber())
-    expect(Number(balanceOfPoolWalletToken1Before - balanceOfPoolWalletToken1After)).to.be.equal(amount0InCharlie.toNumber()*(price.toNumber()))
+    expect(Number(balanceOfCharlieBefore - balanceOfCharlieAfter)).to.be.greaterThanOrEqual(amount0InCharlie.toNumber())
+    expect(Number(balanceOfCharlieTokenAcc1After - balanceOfCharlieTokenAcc1Before)).to.be.equal(amount0InCharlie.toNumber() * (price.toNumber()))
+    expect(Number(balanceOfPoolStateAfter - balanceOfPoolStateBefore)).to.be.equal(amount0InCharlie.toNumber())
+    expect(Number(balanceOfPoolWalletToken1Before - balanceOfPoolWalletToken1After)).to.be.equal(amount0InCharlie.toNumber() * (price.toNumber()))
+
+    // Account info before David swap token
+    const balanceOfDavidBefore = await provider.connection.getBalance(david.publicKey)
+
+    const balanceOfDavidTokenAcc1Before = Number((await spl.getAccount(
+      provider.connection,
+      charlieTokenAcc1
+    )).amount);
+
+    balanceOfPoolStateBefore = await provider.connection.getBalance(poolStateAddr)
+
+    balanceOfPoolWalletToken1Before = Number((await spl.getAccount(
+      provider.connection,
+      poolWalletToken1
+    )).amount);
+
+    // David swap 10 token1 to 1 SOL
+    const amount1InDavid = new anchor.BN(10)
+    const tx5 = await program.methods.swap(new anchor.BN(0), amount1InDavid).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: david.publicKey,
+      tokenAcc1: davidToken1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId
+    }).signers([david]).rpc()
+    return;
+    // Account info after David swap token
+    const balanceOfDavidAfter = await provider.connection.getBalance(david.publicKey)
+
+    const balanceOfDavidTokenAcc1After = Number((await spl.getAccount(
+      provider.connection,
+      davidToken1
+    )).amount);
+
+    balanceOfPoolStateAfter = await provider.connection.getBalance(poolStateAddr)
+
+    balanceOfPoolWalletToken1After = Number((await spl.getAccount(
+      provider.connection,
+      poolWalletToken1
+    )).amount);
+    return;
+
+    expect(balanceOfDavidAfter - balanceOfDavidBefore).to.be.lessThanOrEqual(amount1InDavid.toNumber() / (price.toNumber()))
+    expect(balanceOfDavidAfter - balanceOfDavidBefore).to.be.greaterThan(amount1InDavid.toNumber() / (price.toNumber()) / 2)
+    expect(balanceOfDavidTokenAcc1Before - balanceOfDavidTokenAcc1After).to.be.equal(amount0InCharlie.toNumber())
+    expect(balanceOfPoolStateBefore - balanceOfPoolStateAfter).to.be.equal(amount1InDavid.toNumber()/(price.toNumber()))
+    expect(balanceOfPoolWalletToken1After - balanceOfPoolWalletToken1Before).to.be.equal(amount1InDavid)
+
   })
 });

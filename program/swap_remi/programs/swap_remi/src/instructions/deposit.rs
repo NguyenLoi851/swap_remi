@@ -1,56 +1,39 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 
-use crate::state::PoolState;
 use crate::errors::SwapError;
-use anchor_spl::token::{Transfer, TokenAccount, Token};
+use crate::state::PoolState;
+use anchor_spl::token::{Token, TokenAccount, Transfer};
 
-pub fn deposit(
-    ctx: Context<Deposit>,
-    amount_0: u64,
-    amount_1: u64
-) -> Result<()>{
-    // let state = &ctx.accounts.pool_state;
-
-    // let price = state.price;
-    // if amount_0 * price != amount_1 {
-    //     Err(SwapError::InvalidRadio.into())
-    // }
-
-    // ============ transfer token 0 ============
+pub fn deposit(ctx: Context<Deposit>, amount_0: u64, amount_1: u64) -> Result<()> {
+    // ============ transfer sol ============
     if amount_0 > 0 {
-        let transfer_instruction = Transfer{
-            from: ctx.accounts.token_acc_0.to_account_info(),
-            to: ctx.accounts.pool_wallet_token_0.to_account_info(),
-            authority: ctx.accounts.sender.to_account_info()
-        };
-
         let cpi_ctx = CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
-            transfer_instruction
+            ctx.accounts.system_program.to_account_info(),
+            system_program::Transfer {
+                from: ctx.accounts.sender.to_account_info(),
+                to: ctx.accounts.pool_state.to_account_info(),
+            },
         );
-
-        anchor_spl::token::transfer(cpi_ctx, amount_0)?;
-
+        system_program::transfer(cpi_ctx, amount_0)?;
     }
 
     // ============ transfer token 1 ============
     if amount_1 > 0 {
-        let transfer_instruction = Transfer{
+        let transfer_instruction = Transfer {
             from: ctx.accounts.token_acc_1.to_account_info(),
             to: ctx.accounts.pool_wallet_token_1.to_account_info(),
-            authority: ctx.accounts.sender.to_account_info()
+            authority: ctx.accounts.sender.to_account_info(),
         };
 
         let cpi_ctx = CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
-            transfer_instruction
+            transfer_instruction,
         );
 
         anchor_spl::token::transfer(cpi_ctx, amount_1 as u64)?;
     }
 
     Ok(())
-
 }
 
 #[derive(Accounts)]
@@ -58,19 +41,11 @@ pub struct Deposit<'info> {
     #[account(mut)]
     sender: Signer<'info>,
 
+    #[account(mut)]
     pool_state: Account<'info, PoolState>,
 
     #[account(mut)]
-    token_acc_0: Account<'info, TokenAccount>,
-
-    #[account(mut)]
     token_acc_1: Account<'info, TokenAccount>,
-
-    #[account(
-        mut,
-        constraint = pool_wallet_token_0.key() == pool_state.pool_wallet_token_0
-    )]
-    pool_wallet_token_0: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -79,4 +54,6 @@ pub struct Deposit<'info> {
     pool_wallet_token_1: Account<'info, TokenAccount>,
 
     token_program: Program<'info, Token>,
+
+    system_program: Program<'info, System>,
 }
