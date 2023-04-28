@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 
 use crate::state::PoolState;
 use anchor_spl::token::{Mint, Token, TokenAccount};
@@ -8,7 +8,10 @@ pub fn initialize(ctx: Context<Initialize>, price: u64) -> Result<()> {
     state.mint_acc_token_1 = ctx.accounts.mint_acc_token_1.key().clone();
     state.price = price;
     state.pool_wallet_token_1 = ctx.accounts.pool_wallet_token_1.key().clone();
-    state.bump = *ctx.bumps.get("pool_state").unwrap();
+    state.state_bump = *ctx.bumps.get("pool_state").unwrap();
+    state.wallet_sol_bump = *ctx.bumps.get("pool_wallet_sol").unwrap();
+    state.pool_wallet_sol = ctx.accounts.pool_wallet_sol.key().clone();
+    state.decimal_token_1 = ctx.accounts.mint_acc_token_1.decimals;
     Ok(())
 }
 
@@ -25,6 +28,14 @@ pub struct Initialize<'info> {
 
     #[account(mut)]
     sender: Signer<'info>,
+
+    /// CHECK: This is not dangerous because we don't read or write from this account
+    #[account(
+        seeds = [b"wallet_sol".as_ref()],
+        bump,
+        owner = system_program::System::id()
+    )]
+    pool_wallet_sol: SystemAccount<'info>,
 
     mint_acc_token_1: Account<'info, Mint>,
 
