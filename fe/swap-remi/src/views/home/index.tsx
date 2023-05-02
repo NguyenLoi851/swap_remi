@@ -320,7 +320,7 @@ export const HomeView: FC = ({ }) => {
                 <div className="font-bold text-3xl">How to use</div>
                 <div>1. Connect Phantom wallet</div>
                 <div>2. Get testnet SOL in <a href="https://solfaucet.com/" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
-                <div>3. Swap SOL to get MOVE token through Swap Token Feature (you need to input token amount greater than 0)</div>
+                <div>3. Swap SOL to get MOVE token, and vice versa through Swap Token Feature (you need to input token amount greater than 0)</div>
                 <div>4. Add SOL and MOVE liquidity token through Add Token Liquidity Feature (you need to input at least one token amount greater than 0)</div>
             </div>
             <hr />
