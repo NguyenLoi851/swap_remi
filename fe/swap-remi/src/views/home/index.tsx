@@ -211,14 +211,13 @@ export const HomeView: FC = ({ }) => {
             try {
                 const signedTx = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signedTx.serialize())
-                console.log(await connection.getSignatureStatus(txId))
-                await timeout(3000);
-                router.reload()
+                connection.onSignatureWithOptions(txId, ()=>{
+                    router.reload()
+                })
             } catch (error) {
                 try {
                     const errorObject = JSON.parse(JSON.stringify(error));
                     const errorMessageFullLog = errorObject.logs.find((e: any) => e.includes("Error Message"));
-                    console.log("errorHello", errorMessageFullLog)
                     try {
                         const errorMessage = errorMessageFullLog.split("Error Message: ")[1]
                         alert(errorMessage)
@@ -297,9 +296,9 @@ export const HomeView: FC = ({ }) => {
             try {
                 const signedTx = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signedTx.serialize())
-                console.log(await connection.getSignatureStatus(txId))
-                await timeout(3000);
-                router.reload()
+                connection.onSignatureWithOptions(txId, ()=>{
+                    router.reload()
+                })
             } catch (error) {
                 const errorObject = JSON.parse(JSON.stringify(error));
                 const errorMessageFullLog = errorObject.logs.find((e: any) => e.includes("Error Message"));
