@@ -5,8 +5,6 @@ import { useNetworkConfiguration } from '../contexts/NetworkConfigurationProvide
 const NetworkSwitcher: FC = () => {
   const { networkConfiguration, setNetworkConfiguration } = useNetworkConfiguration();
 
-  console.log(networkConfiguration);
-
   useEffect(() => {
     setNetworkConfiguration('testnet');
   }, [])
