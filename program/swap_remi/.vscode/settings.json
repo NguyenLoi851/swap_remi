@@ -1,0 +1,7 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./programs/swap_remi/Cargo.toml",
+        "./programs/swap_remi/Cargo.toml"
+    ],
+    "rust-analyzer.showUnlinkedFileNotification": false
+}

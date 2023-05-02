@@ -2,13 +2,13 @@
 seeds = false
 skip-lint = false
 [programs.localnet]
-swap_remi = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+swap_remi = "2FJyhaV6H11ZexBUXtAZtYiaDmtqZBrKWVpFDRoCEWBt"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://api.testnet.solana.com"
 
 [provider]
-cluster = "localnet"
+cluster = "testnet"
 wallet = "/home/cloud/.config/solana/id.json"
 
 [scripts]
