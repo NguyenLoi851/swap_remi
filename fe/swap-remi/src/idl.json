@@ -1,0 +1,235 @@
+{
+  "version": "0.1.0",
+  "name": "swap_remi",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "poolState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sender",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "poolWalletSol",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintAccToken1",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolWalletToken1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "sender",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "poolState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWalletSol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAcc1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWalletToken1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount0",
+          "type": "u64"
+        },
+        {
+          "name": "amount1",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "swap",
+      "accounts": [
+        {
+          "name": "sender",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "poolState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWalletSol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenAcc1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWalletToken1",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount0",
+          "type": "u64"
+        },
+        {
+          "name": "amount1",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "PoolState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mintAccToken1",
+            "type": "publicKey"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "poolWalletToken1",
+            "type": "publicKey"
+          },
+          {
+            "name": "stateBump",
+            "type": "u8"
+          },
+          {
+            "name": "walletSolBump",
+            "type": "u8"
+          },
+          {
+            "name": "poolWalletSol",
+            "type": "publicKey"
+          },
+          {
+            "name": "decimalToken1",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidDepositAmount",
+      "msg": "Invalid deposit amount"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidSwapDirection",
+      "msg": "Invalid swap direction"
+    },
+    {
+      "code": 6002,
+      "name": "PoolNotEnoughSolLiquidity",
+      "msg": "Pool does not enough SOL liquidity to swap (include rent exemption)"
+    },
+    {
+      "code": 6003,
+      "name": "PoolNotEnoughTokenLiquidity",
+      "msg": "Pool does not enough token liquidity to swap"
+    },
+    {
+      "code": 6004,
+      "name": "UserNotEnoughSolBalance",
+      "msg": "User does not enough SOL balance (include rent exemption)"
+    },
+    {
+      "code": 6005,
+      "name": "UserNotEnoughTokenAmount",
+      "msg": "User does not enough token amount"
+    }
+  ],
+  "metadata": {
+    "address": "2FJyhaV6H11ZexBUXtAZtYiaDmtqZBrKWVpFDRoCEWBt"
+  }
+}
