@@ -1,9 +1,9 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
+import { AnchorError, Program } from "@project-serum/anchor";
 import { SwapRemi } from "../target/types/swap_remi";
 import * as spl from '@solana/spl-token';
 import { findProgramAddressSync } from "@project-serum/anchor/dist/cjs/utils/pubkey";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 
 describe("swap_remi", () => {
   // Configure the client to use the local cluster.
@@ -151,27 +151,26 @@ describe("swap_remi", () => {
     [mintAccToken1] = await createMint();
     [mintAccToken2] = await createMint();
 
-    // console.log(mintAccToken0, mintAccToken1, mintAccToken2)
     const [_mintAccToken0, _mintAccToken1, _mintAccToken2] = [mintAccToken0, mintAccToken1, mintAccToken2].sort()
     mintAccToken0 = _mintAccToken0;
     mintAccToken1 = _mintAccToken1;
     mintAccToken2 = _mintAccToken2;
 
-    aliceTokenAcc0 = await createAssociatedTokenAccountAndFundToken(alice, Math.pow(1000, 6), mintAccToken0);
-    aliceTokenAcc1 = await createAssociatedTokenAccountAndFundToken(alice, Math.pow(1000, 6), mintAccToken1);
-    aliceTokenAcc2 = await createAssociatedTokenAccountAndFundToken(alice, Math.pow(1000, 6), mintAccToken2);
+    aliceTokenAcc0 = await createAssociatedTokenAccountAndFundToken(alice, 1000 * Math.pow(10, 6), mintAccToken0);
+    aliceTokenAcc1 = await createAssociatedTokenAccountAndFundToken(alice, 1000 * Math.pow(10, 6), mintAccToken1);
+    aliceTokenAcc2 = await createAssociatedTokenAccountAndFundToken(alice, 1000 * Math.pow(10, 6), mintAccToken2);
 
-    bobTokenAcc0 = await createAssociatedTokenAccountAndFundToken(bob, Math.pow(1000, 6), mintAccToken0);
-    bobTokenAcc1 = await createAssociatedTokenAccountAndFundToken(bob, Math.pow(1000, 6), mintAccToken1);
-    bobTokenAcc2 = await createAssociatedTokenAccountAndFundToken(bob, Math.pow(1000, 6), mintAccToken2);
+    bobTokenAcc0 = await createAssociatedTokenAccountAndFundToken(bob, 1000 * Math.pow(10, 6), mintAccToken0);
+    bobTokenAcc1 = await createAssociatedTokenAccountAndFundToken(bob, 1000 * Math.pow(10, 6), mintAccToken1);
+    bobTokenAcc2 = await createAssociatedTokenAccountAndFundToken(bob, 1000 * Math.pow(10, 6), mintAccToken2);
 
-    charlieTokenAcc0 = await createAssociatedTokenAccountAndFundToken(charlie, Math.pow(1000, 6), mintAccToken0);
-    charlieTokenAcc1 = await createAssociatedTokenAccountAndFundToken(charlie, Math.pow(1000, 6), mintAccToken1);
-    charlieTokenAcc2 = await createAssociatedTokenAccountAndFundToken(charlie, Math.pow(1000, 6), mintAccToken2);
+    charlieTokenAcc0 = await createAssociatedTokenAccountAndFundToken(charlie, 1000 * Math.pow(10, 6), mintAccToken0);
+    charlieTokenAcc1 = await createAssociatedTokenAccountAndFundToken(charlie, 1000 * Math.pow(10, 6), mintAccToken1);
+    charlieTokenAcc2 = await createAssociatedTokenAccountAndFundToken(charlie, 1000 * Math.pow(10, 6), mintAccToken2);
 
-    davidTokenAcc0 = await createAssociatedTokenAccountAndFundToken(david, Math.pow(1000, 6), mintAccToken0);
-    davidTokenAcc1 = await createAssociatedTokenAccountAndFundToken(david, Math.pow(1000, 6), mintAccToken1);
-    davidTokenAcc2 = await createAssociatedTokenAccountAndFundToken(david, Math.pow(1000, 6), mintAccToken2);
+    davidTokenAcc0 = await createAssociatedTokenAccountAndFundToken(david, 1000 * Math.pow(10, 6), mintAccToken0);
+    davidTokenAcc1 = await createAssociatedTokenAccountAndFundToken(david, 1000 * Math.pow(10, 6), mintAccToken1);
+    davidTokenAcc2 = await createAssociatedTokenAccountAndFundToken(david, 1000 * Math.pow(10, 6), mintAccToken2);
 
     // const x = await spl.getAccount(provider.connection, aliceTokenAcc0);
     // console.log(x);
@@ -198,7 +197,7 @@ describe("swap_remi", () => {
     }).signers([alice]).rpc()
   })
 
-  it("Initialize pool and Alice deposit", async () => {
+  it("Initialize pool and Alice deposits", async () => {
 
     // Initialize
     const price = new anchor.BN(10)
@@ -264,7 +263,7 @@ describe("swap_remi", () => {
     expect(balanceOfPoolWalletToken1After - balanceOfPoolWalletToken1Before).to.be.equal(amount1Alice.toNumber())
   })
 
-  it("Initialize, Alice deposit 100 token0, Bob deposit 200 token1, Charlie swaps from 10 SOL to get 100 token1, and David swaps from 10 token1 to get 1 SOL", async () => {
+  it("Initialize, Alice deposit 5 SOL, Bob deposits 200 token1, Charlie swaps from 10 SOL to get 100 token1, and David swaps from 10 token1 to get 1 SOL", async () => {
     // Initialize
     const price = new anchor.BN(10)
     const tx1 = await program.methods.initialize(price).accounts({
@@ -408,5 +407,398 @@ describe("swap_remi", () => {
     expect(balanceOfPoolWalletSolBefore - balanceOfPoolWalletSolAfter).to.be.equal(amount0OutDavid)
     expect(balanceOfPoolWalletToken1After - balanceOfPoolWalletToken1Before).to.be.equal(amount1InDavid.toNumber())
 
+  })
+
+  it("Initialize pool and revert when Alice deposits 0 token and 0 SOL", async () => {
+
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Alice deposit 0 SOL and 0 token 1
+    try {
+      const amount0Alice = new anchor.BN(0)
+      const amount1Alice = new anchor.BN(0)
+      const tx2 = await program.methods.deposit(amount0Alice, amount1Alice).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: alice.publicKey,
+        tokenAcc1: aliceTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([alice]).rpc()
+      assert(false, "Should have failed but did not");
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("Invalid deposit amount");
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("InvalidDepositAmount")
+    }
+
+  })
+
+  it("Initialize pool and revert when Alice deposits SOL much more than account's balance", async () => {
+
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Account info before Alice deposit SOL and token 1
+    const balanceOfAliceBefore = await provider.connection.getBalance(alice.publicKey);
+
+    // Alice deposit SOL and token 1
+    try {
+      const amount0Alice = new anchor.BN(balanceOfAliceBefore + 10)
+      const amount1Alice = new anchor.BN(200 * Math.pow(10, 6))
+      const tx2 = await program.methods.deposit(amount0Alice, amount1Alice).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: alice.publicKey,
+        tokenAcc1: aliceTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([alice]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("User does not enough SOL balance (include rent exemption)")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("UserNotEnoughSolBalance")
+    }
+  })
+
+  it("Initialize pool and revert when Alice deposits token much more than account's balance", async () => {
+
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Account info before Alice deposit SOL and token 1
+    const balanceOfAliceTokenAcc1Before = Number((await spl.getAccount(
+      provider.connection,
+      aliceTokenAcc1
+    )).amount);
+
+    // Alice deposit SOL and token 1
+    try {
+      const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 5)
+      const amount1Alice = new anchor.BN(balanceOfAliceTokenAcc1Before + 10)
+      const tx2 = await program.methods.deposit(amount0Alice, amount1Alice).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: alice.publicKey,
+        tokenAcc1: aliceTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([alice]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("User does not enough token amount")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("UserNotEnoughTokenAmount")
+    }
+  })
+
+  it("Initialize, Alice deposit 5 SOL, Bob deposits 200 token1 and revert when Charlie and David swap without valid arguments to determine direction swap", async () => {
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Alice deposit SOL
+    const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 5)
+    const tx2 = await program.methods.deposit(amount0Alice, new anchor.BN(0)).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      tokenAcc1: aliceTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([alice]).rpc()
+
+    // Bob deposit token 1
+    const amount1Bob = new anchor.BN(200 * Math.pow(10, 6))
+    const tx3 = await program.methods.deposit(new anchor.BN(0), amount1Bob).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: bob.publicKey,
+      tokenAcc1: bobTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([bob]).rpc()
+
+    let balanceOfPoolWalletSolAfter = await provider.connection.getBalance(poolWalletSolAddr);
+
+    let balanceOfPoolWalletToken1After = Number((await spl.getAccount(
+      provider.connection,
+      poolWalletToken1
+    )).amount);
+
+    expect(balanceOfPoolWalletSolAfter).to.be.greaterThanOrEqual(amount0Alice.toNumber());
+    expect(balanceOfPoolWalletToken1After).to.be.equal(amount1Bob.toNumber());
+
+    try {
+      const amount0InCharlie = new anchor.BN(10 * anchor.web3.LAMPORTS_PER_SOL)
+      const tx4 = await program.methods.swap(amount0InCharlie, new anchor.BN(10)).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: charlie.publicKey,
+        tokenAcc1: charlieTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([charlie]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("Invalid swap direction")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("InvalidSwapDirection")
+    }
+
+
+    try {
+      const tx5 = await program.methods.swap(new anchor.BN(0), new anchor.BN(0)).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: david.publicKey,
+        tokenAcc1: davidTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([david]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("Invalid swap direction")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("InvalidSwapDirection")
+    }
+  })
+
+  it("Initialize, Alice deposit 5 SOL, Bob deposits 20 token1 and revert when Charlie swaps from 10 SOL to get 100 token1; or revert when David swaps from 500 tokens to get 50 SOL, which is more than pool's token liquidity", async () => {
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Alice deposit SOL
+    const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 5)
+    const tx2 = await program.methods.deposit(amount0Alice, new anchor.BN(0)).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      tokenAcc1: aliceTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([alice]).rpc()
+
+    // Bob deposit token 1
+    const amount1Bob = new anchor.BN(20 * Math.pow(10, 6))
+    const tx3 = await program.methods.deposit(new anchor.BN(0), amount1Bob).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: bob.publicKey,
+      tokenAcc1: bobTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([bob]).rpc()
+
+    let balanceOfPoolWalletSolAfter = await provider.connection.getBalance(poolWalletSolAddr);
+
+    let balanceOfPoolWalletToken1After = Number((await spl.getAccount(
+      provider.connection,
+      poolWalletToken1
+    )).amount);
+
+    expect(balanceOfPoolWalletSolAfter).to.be.greaterThanOrEqual(amount0Alice.toNumber());
+    expect(balanceOfPoolWalletToken1After).to.be.equal(amount1Bob.toNumber());
+
+    // Charlie swap 10 SOL to 100 token1
+    try {
+      const amount0InCharlie = new anchor.BN(10 * anchor.web3.LAMPORTS_PER_SOL)
+      const tx4 = await program.methods.swap(amount0InCharlie, new anchor.BN(0)).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: charlie.publicKey,
+        tokenAcc1: charlieTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([charlie]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("Pool does not enough token liquidity to swap")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("PoolNotEnoughTokenLiquidity")
+    }
+
+    // David swap 500 token1 to 50 SOL
+    try {
+      const amount1InDavid = new anchor.BN(500 * Math.pow(10, 6))
+      const tx5 = await program.methods.swap(new anchor.BN(0), amount1InDavid).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: david.publicKey,
+        tokenAcc1: davidTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([david]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("Pool does not enough SOL liquidity to swap (include rent exemption)")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("PoolNotEnoughSolLiquidity")
+    }
+
+  })
+
+  it("Initialize, Alice deposit 5 SOL, Bob deposits 200 token1 and revert when Charlie or David swaps amount of token much more than they own", async () => {
+    // Initialize
+    const price = new anchor.BN(10)
+    const tx1 = await program.methods.initialize(price).accounts({
+      mintAccToken1: mintAccToken1,
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      poolWalletSol: poolWalletSolAddr,
+
+      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: spl.TOKEN_PROGRAM_ID
+    }).signers([alice]).rpc()
+
+    // Alice deposit SOL
+    const amount0Alice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 5)
+    const tx2 = await program.methods.deposit(amount0Alice, new anchor.BN(0)).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: alice.publicKey,
+      tokenAcc1: aliceTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([alice]).rpc()
+
+    // Bob deposit token 1
+    const amount1Bob = new anchor.BN(200 * Math.pow(10, 6))
+    const tx3 = await program.methods.deposit(new anchor.BN(0), amount1Bob).accounts({
+      poolState: poolStateAddr,
+      poolWalletToken1: poolWalletToken1,
+      sender: bob.publicKey,
+      tokenAcc1: bobTokenAcc1,
+      tokenProgram: spl.TOKEN_PROGRAM_ID,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      poolWalletSol: poolWalletSolAddr
+    }).signers([bob]).rpc()
+
+    let balanceOfPoolWalletSolAfter = await provider.connection.getBalance(poolWalletSolAddr);
+
+    let balanceOfPoolWalletToken1After = Number((await spl.getAccount(
+      provider.connection,
+      poolWalletToken1
+    )).amount);
+
+    expect(balanceOfPoolWalletSolAfter).to.be.greaterThanOrEqual(amount0Alice.toNumber());
+    expect(balanceOfPoolWalletToken1After).to.be.equal(amount1Bob.toNumber());
+
+    // Account info before Charlie swap token
+    const balanceOfCharlieBefore = await provider.connection.getBalance(charlie.publicKey)
+
+    // Charlie swap SOL to token1
+    try {
+      const amount0InCharlie = new anchor.BN(balanceOfCharlieBefore + 10)
+      const tx4 = await program.methods.swap(amount0InCharlie, new anchor.BN(0)).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: charlie.publicKey,
+        tokenAcc1: charlieTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([charlie]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("User does not enough SOL balance (include rent exemption)")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("UserNotEnoughSolBalance")
+    }
+
+    // Account info before David swap token
+    const balanceOfDavidTokenAcc1Before = Number((await spl.getAccount(
+      provider.connection,
+      davidTokenAcc1
+    )).amount);
+
+    // David swap token1 to SOL
+    try {
+      const amount1InDavid = new anchor.BN(balanceOfDavidTokenAcc1Before + 10)
+      const tx5 = await program.methods.swap(new anchor.BN(0), amount1InDavid).accounts({
+        poolState: poolStateAddr,
+        poolWalletToken1: poolWalletToken1,
+        sender: david.publicKey,
+        tokenAcc1: davidTokenAcc1,
+        tokenProgram: spl.TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        poolWalletSol: poolWalletSolAddr
+      }).signers([david]).rpc()
+      assert(false, "Should have failed but did not")
+    } catch (error) {
+      expect(error).instanceOf(AnchorError)
+      expect((error as AnchorError).error.errorMessage).to.be.equal("User does not enough token amount")
+      expect((error as AnchorError).error.errorCode.code).to.be.equal("UserNotEnoughTokenAmount")
+    }
   })
 });

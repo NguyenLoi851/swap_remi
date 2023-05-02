@@ -5,8 +5,15 @@ use crate::state::PoolState;
 use anchor_spl::token::{Token, TokenAccount, Transfer};
 
 pub fn deposit(ctx: Context<Deposit>, amount_0: u64, amount_1: u64) -> Result<()> {
+    if amount_0 == 0 && amount_1 == 0 {
+        return Err(SwapError::InvalidDepositAmount.into());
+    }
     // ============ transfer sol ============
     if amount_0 > 0 {
+        if ctx.accounts.sender.lamports() <= amount_0 {
+            return Err(SwapError::UserNotEnoughSolBalance.into())
+        }
+
         let cpi_ctx = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
@@ -19,6 +26,10 @@ pub fn deposit(ctx: Context<Deposit>, amount_0: u64, amount_1: u64) -> Result<()
 
     // ============ transfer token 1 ============
     if amount_1 > 0 {
+        if ctx.accounts.token_acc_1.amount < amount_1 {
+            return Err(SwapError::UserNotEnoughTokenAmount.into())
+        }
+
         let transfer_instruction = Transfer {
             from: ctx.accounts.token_acc_1.to_account_info(),
             to: ctx.accounts.pool_wallet_token_1.to_account_info(),
