@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  background-image: radial-gradient(
+    circle farthest-side at 50% 100%,rgba(1, 9, 18, 0),
+    rgba(172, 190, 218, 0.6) 36%,
+    rgba(150, 186, 228, 0.6) 55%,
+    rgba(224, 220, 229, 0.4));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: #707070;
+} */
+
