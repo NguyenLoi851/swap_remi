@@ -42,9 +42,9 @@ function getProgramInstance(connection, wallet) {
     // );
 
     // const user = new anchor.Wallet(userKeypair)
-    
+
     const user = {
-        publicKey: new anchor.web3.PublicKey('3tfLbi7bAJZfCJPM1UAB8Qq62HmoFWjmXAyBEkv3obLw')
+        publicKey: new anchor.web3.PublicKey('9g1s9z36cHHrMaPLuHoFkwNKtqRn62MNbQMSgjTu8eEr')
     }
     const amount = 10000 * Math.pow(10, 6)
     const userAssociatedTokenAccount = await spl.getAssociatedTokenAddress(
@@ -54,6 +54,20 @@ function getProgramInstance(connection, wallet) {
         spl.TOKEN_PROGRAM_ID,
         spl.ASSOCIATED_TOKEN_PROGRAM_ID
     )
+
+    const txFundTokenAccount = new anchor.web3.Transaction();
+    try {
+        await spl.getAccount(program.provider.connection, userAssociatedTokenAccount)
+    } catch (error) {
+        txFundTokenAccount.add(spl.createAssociatedTokenAccountInstruction(
+            admin.publicKey,
+            userAssociatedTokenAccount,
+            user.publicKey,
+            mintTokenAcc,
+            spl.TOKEN_PROGRAM_ID,
+            spl.ASSOCIATED_TOKEN_PROGRAM_ID
+        ))
+    }
 
     // const userAssociatedTokenAccount = await spl.getOrCreateAssociatedTokenAccount(
     //     program.provider.connection,
@@ -66,16 +80,7 @@ function getProgramInstance(connection, wallet) {
     //     spl.TOKEN_PROGRAM_ID,
     //     spl.ASSOCIATED_TOKEN_PROGRAM_ID
     // )
-    
-    const txFundTokenAccount = new anchor.web3.Transaction();
-    // txFundTokenAccount.add(spl.createAssociatedTokenAccountInstruction(
-    //     admin.publicKey,
-    //     userAssociatedTokenAccount,
-    //     user.publicKey,
-    //     mintTokenAcc,
-    //     spl.TOKEN_PROGRAM_ID,
-    //     spl.ASSOCIATED_TOKEN_PROGRAM_ID
-    // ))
+
     txFundTokenAccount.add(spl.createMintToInstruction(
         mintTokenAcc,
         userAssociatedTokenAccount,

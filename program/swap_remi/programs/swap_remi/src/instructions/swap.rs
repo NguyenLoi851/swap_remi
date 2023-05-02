@@ -18,14 +18,23 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
     let price = pool_state.price;
     let amount_in = if amount_0 > 0 { amount_0 } else { amount_1 };
     let amount_out = if amount_in == amount_0 {
-        amount_in / (10_i32.pow(9)) as u64 * price * (10_i32.pow(pool_state.decimal_token_1.into()) as u64)
+        amount_in * price * (10_i32.pow(pool_state.decimal_token_1.into()) as u64) / (10_i32.pow(9)) as u64
     } else {
-        amount_in / (10_i32.pow(pool_state.decimal_token_1.into()) as u64) / price * (10_i32.pow(9)) as u64
+        amount_in * (10_i32.pow(9)) as u64 / (10_i32.pow(pool_state.decimal_token_1.into()) as u64) / price
     };
 
     // swap from SOL to token
     if amount_in == amount_0 {
         // sender transfer SOL to pool_state
+
+        //check liquidity amount
+        if ctx.accounts.sender.lamports() <= amount_in {
+            return Err(SwapError::UserNotEnoughSolBalance.into())
+        }
+        if ctx.accounts.pool_wallet_token_1.amount < amount_out {
+            return Err(SwapError::PoolNotEnoughTokenLiquidity.into())
+        }
+
         let cpi_ctx = CpiContext::new(
             ctx.accounts.system_program.to_account_info(),
             system_program::Transfer {
@@ -64,6 +73,17 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
     // swap from token to SOL
     else {
         // sender transfer token to pool_state
+        // check liquidity condition
+        // msg!("{}", ctx.accounts.rent.minimum_balance(ctx.accounts.pool_wallet_sol.to_account_info().data_len()));
+        let rent_exempt_amount = ctx.accounts.rent.minimum_balance(ctx.accounts.pool_wallet_sol.to_account_info().data_len());
+        if ctx.accounts.token_acc_1.amount < amount_in {
+            return Err(SwapError::UserNotEnoughTokenAmount.into())
+        }
+        
+        if ctx.accounts.pool_wallet_sol.lamports() - rent_exempt_amount < amount_out {
+            return Err(SwapError::PoolNotEnoughSolLiquidity.into())
+        }
+
         let transfer_instruction = Transfer {
             from: ctx.accounts.token_acc_1.to_account_info(),
             to: ctx.accounts.pool_wallet_token_1.to_account_info(),
@@ -97,14 +117,6 @@ pub fn swap(ctx: Context<Swap>, amount_0: u64, amount_1: u64) -> Result<()> {
             signer_seeds_vector.as_slice(),
         );
 
-        // let cpi_ctx = CpiContext::new(
-        //     ctx.accounts.system_program.to_account_info(),
-        //     system_program::Transfer {
-        //         from: ctx.accounts.pool_wallet_sol.to_account_info(),
-        //         to: ctx.accounts.sender.to_account_info(),
-        //     },
-        // );
-  
         system_program::transfer(cpi_ctx, amount_out)?;
     }
 
@@ -135,6 +147,6 @@ pub struct Swap<'info> {
     pool_wallet_token_1: Account<'info, TokenAccount>,
 
     token_program: Program<'info, Token>,
-
     system_program: Program<'info, System>,
+    rent: Sysvar<'info, Rent>,
 }
