@@ -316,7 +316,7 @@ export const HomeView: FC = ({ }) => {
 
     return (
         <div>
-            <div className="ml-20 mt-10 grid gap-4 mb-10">
+            <div className="ml-20 mt-5 grid gap-4 mb-5">
                 <div className="font-bold text-3xl">How to use</div>
                 <div>1. Connect Phantom wallet</div>
                 <div>2. Get testnet SOL in <a href="https://solfaucet.com/" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
@@ -327,57 +327,61 @@ export const HomeView: FC = ({ }) => {
             <hr />
             <hr />
             {wallet.publicKey &&
-                <div className="flex flex-row relative">
-                    <div className="m-10 absolute left-20">
-                        <div className="grid gap-2">
-                            <div className="text-center font-bold text-2xl">Pool Swap Info</div>
-                            <div>Swap program id: {PROGRAM_ID}</div>
-                            <div>Pool State Addr: {poolStateAddr.toBase58()}</div>
-                            <br />
-                            <div>Pool Wallet SOL Addr: {poolWalletSolAddr.toBase58()}</div>
-                            <div>Pool Wallet SOL Balance: <span className="text-yellow-600 font-bold">{poolWalletSolBalance} SOL</span></div>
-                            <br />
-                            <div>Pool Wallet Of MOVE Token: {poolWalletToken1.toBase58()}</div>
-                            <div>Pool Wallet Of MOVE Token Amount: <span className="text-yellow-600 font-bold">{poolWalletTokenAmount} MOVE</span></div>
-                        </div>
-                        <div className="m-20"></div>
-                        <div>
-                            <div className="text-2xl font-bold text-center">User Info</div>
-                            <div>User Account: {wallet.publicKey?.toBase58()}</div>
-                            <div>User's SOL Balance: <span className="text-yellow-600 font-bold">{userBalance} SOL</span></div>
-                            <br />
-                            <div>User Associated Token Account: {userTokenAcc.toBase58()}</div>
-                            {
-                                userTokenAccBalance != -1 ?
-                                    <div>User's Token Balance: <span className="text-yellow-600 font-bold">{userTokenAccBalance} MOVE</span></div> :
-                                    <div>User's Token Balance: HAVE NOT BEEN CREATED</div>
-                            }
-                        </div>
-                    </div>
-                    <div className="m-10 absolute right-20">
-                        <div className="grid gap-5 border-2 border-gray-900 p-5">
-                            <div className="font-bold text-center text-2xl">Add Token Liquidity</div>
-                            <div><input className="border-teal-700 border-2" type="number" value={solLiquidityAmount} onChange={handleChangeSolLiquidityAmount}></input> SOL</div>
-                            <div><input className="border-teal-700 border-2" type="number" value={tokenLiquidityAmount} onChange={handleChangeTokenlLiquidityAmount}></input> MOVE</div>
-                            <button onClick={handleAddLiquidity} className="bg-amber-300">ADD LIQUIDITY</button>
-                        </div>
-                        <div className="m-20"></div>
-                        <div className="grid gap-4 border-2 border-gray-900 p-5">
-                            <div className="font-bold text-center text-2xl">Swap Token</div>
-                            <div>
-                                <input className="border-teal-700 border-2" type="number" value={swapTokenAmountInOut[0]} onChange={(e) => handleSetSwapTokenAmountInOut(e)}></input>
-                                <select
-                                    value={swapTokenInOut[0]}
-                                    onChange={(e) => handleSetSwapTokenInOut(e)}
-                                    className="select max-w-xs m-5"
-                                >
-                                    <option value="SOL">SOL</option>
-                                    <option value="MOVE">MOVE</option>
-                                </select>
+                <div>
+                    <div className="flex flex-row relative">
+                        <div className="m-10 absolute left-20">
+                            <div className="grid gap-2">
+                                <div className="text-center font-bold text-2xl">Pool Swap Info</div>
+                                <div>Swap program id: {PROGRAM_ID}</div>
+                                <div>Pool State Addr: {poolStateAddr.toBase58()}</div>
+                                <br />
+                                <div>Pool Wallet SOL Addr: {poolWalletSolAddr.toBase58()}</div>
+                                <div>Pool Wallet SOL Balance: <span className="text-yellow-600 font-bold">{poolWalletSolBalance} SOL</span></div>
+                                <br />
+                                <div>Pool Wallet Of MOVE Token: {poolWalletToken1.toBase58()}</div>
+                                <div>Pool Wallet Of MOVE Token Amount: <span className="text-yellow-600 font-bold">{poolWalletTokenAmount} MOVE</span></div>
                             </div>
-                            <div>You will receive <span className="font-bold text-yellow-600">{swapTokenAmountInOut[1]} {swapTokenInOut[1]}</span></div>
-                            <button onClick={handleSwap} className="bg-amber-300">SWAP</button>
+                            <div className="m-20"></div>
+                            <div>
+                                <div className="text-2xl font-bold text-center">User Info</div>
+                                <div>User Account: {wallet.publicKey?.toBase58()}</div>
+                                <div>User's SOL Balance: <span className="text-yellow-600 font-bold">{userBalance} SOL</span></div>
+                                <br />
+                                <div>User Associated Token Account: {userTokenAcc.toBase58()}</div>
+                                {
+                                    userTokenAccBalance != -1 ?
+                                        <div>User's Token Balance: <span className="text-yellow-600 font-bold">{userTokenAccBalance} MOVE</span></div> :
+                                        <div>User's Token Balance: HAVE NOT BEEN CREATED</div>
+                                }
+                            </div>
+
                         </div>
+                        <div className="m-10 absolute right-20">
+                            <div className="grid gap-5 border-2 border-gray-900 p-5">
+                                <div className="font-bold text-center text-2xl">Add Token Liquidity</div>
+                                <div><input className="border-teal-700 border-2" type="number" value={solLiquidityAmount} onChange={handleChangeSolLiquidityAmount}></input> SOL</div>
+                                <div><input className="border-teal-700 border-2" type="number" value={tokenLiquidityAmount} onChange={handleChangeTokenlLiquidityAmount}></input> MOVE</div>
+                                <button onClick={handleAddLiquidity} className="bg-amber-300">ADD LIQUIDITY</button>
+                            </div>
+                            <div className="m-20"></div>
+                            <div className="grid gap-4 border-2 border-gray-900 p-5">
+                                <div className="font-bold text-center text-2xl">Swap Token</div>
+                                <div>
+                                    <input className="border-teal-700 border-2" type="number" value={swapTokenAmountInOut[0]} onChange={(e) => handleSetSwapTokenAmountInOut(e)}></input>
+                                    <select
+                                        value={swapTokenInOut[0]}
+                                        onChange={(e) => handleSetSwapTokenInOut(e)}
+                                        className="select max-w-xs m-5"
+                                    >
+                                        <option value="SOL">SOL</option>
+                                        <option value="MOVE">MOVE</option>
+                                    </select>
+                                </div>
+                                <div>You will receive <span className="font-bold text-yellow-600">{swapTokenAmountInOut[1]} {swapTokenInOut[1]}</span></div>
+                                <button onClick={handleSwap} className="bg-amber-300">SWAP</button>
+                            </div>
+                        </div>
+                        
                     </div>
                 </div>
             }

@@ -13,8 +13,8 @@ const WalletMultiButtonDynamic = dynamic(
 export const AppBar: React.FC = () => {
 
     return (
-        <div className='bg-purple-600'>
-            <div className='flex flex-row relative m-20'>
+        <div className='bg-purple-500'>
+            <div className='flex flex-row relative ml-20 mr-20 mt-10 mb-10'>
                 <div className='text-7xl font-bold'>
                     Swap Remi
                 </div>
