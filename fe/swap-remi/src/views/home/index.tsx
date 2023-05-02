@@ -211,7 +211,7 @@ export const HomeView: FC = ({ }) => {
             try {
                 const signedTx = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signedTx.serialize())
-                connection.onSignatureWithOptions(txId, ()=>{
+                connection.onSignatureWithOptions(txId, () => {
                     router.reload()
                 })
             } catch (error) {
@@ -296,7 +296,7 @@ export const HomeView: FC = ({ }) => {
             try {
                 const signedTx = await wallet.signTransaction(tx);
                 const txId = await connection.sendRawTransaction(signedTx.serialize())
-                connection.onSignatureWithOptions(txId, ()=>{
+                connection.onSignatureWithOptions(txId, () => {
                     router.reload()
                 })
             } catch (error) {
@@ -316,10 +316,20 @@ export const HomeView: FC = ({ }) => {
 
     return (
         <div>
+            <div className="ml-20 mt-10 grid gap-4 mb-10">
+                <div className="font-bold text-3xl">How to use</div>
+                <div>1. Connect Phantom wallet</div>
+                <div>2. Get testnet SOL in <a href="https://solfaucet.com/" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
+                <div>3. Swap SOL to get MOVE token through Swap Token Feature (you need to input token amount greater than 0)</div>
+                <div>4. Add SOL and MOVE liquidity token through Add Token Liquidity Feature (you need to input at least one token amount greater than 0)</div>
+            </div>
+            <hr />
+            <hr />
+            <hr />
             {wallet.publicKey &&
                 <div className="flex flex-row relative">
-                    <div className="m-20 absolute left-20">
-                        <div className="grid gap-4">
+                    <div className="m-10 absolute left-20">
+                        <div className="grid gap-2">
                             <div className="text-center font-bold text-2xl">Pool Swap Info</div>
                             <div>Swap program id: {PROGRAM_ID}</div>
                             <div>Pool State Addr: {poolStateAddr.toBase58()}</div>
@@ -344,15 +354,15 @@ export const HomeView: FC = ({ }) => {
                             }
                         </div>
                     </div>
-                    <div className="m-20 absolute right-20">
-                        <div className="grid gap-10 border-2 border-gray-900 p-5">
+                    <div className="m-10 absolute right-20">
+                        <div className="grid gap-5 border-2 border-gray-900 p-5">
                             <div className="font-bold text-center text-2xl">Add Token Liquidity</div>
                             <div><input className="border-teal-700 border-2" type="number" value={solLiquidityAmount} onChange={handleChangeSolLiquidityAmount}></input> SOL</div>
                             <div><input className="border-teal-700 border-2" type="number" value={tokenLiquidityAmount} onChange={handleChangeTokenlLiquidityAmount}></input> MOVE</div>
                             <button onClick={handleAddLiquidity} className="bg-amber-300">ADD LIQUIDITY</button>
                         </div>
                         <div className="m-20"></div>
-                        <div className="grid gap-8 border-2 border-gray-900 p-5">
+                        <div className="grid gap-4 border-2 border-gray-900 p-5">
                             <div className="font-bold text-center text-2xl">Swap Token</div>
                             <div>
                                 <input className="border-teal-700 border-2" type="number" value={swapTokenAmountInOut[0]} onChange={(e) => handleSetSwapTokenAmountInOut(e)}></input>
@@ -371,7 +381,6 @@ export const HomeView: FC = ({ }) => {
                     </div>
                 </div>
             }
-
         </div>
     )
 }
