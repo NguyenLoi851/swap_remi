@@ -356,7 +356,7 @@ export const HomeView: FC = ({ }) => {
                                 {
                                     userTokenAccBalance != -1 ?
                                         <div>User's Token Balance: <span className="text-yellow-600 font-bold">{userTokenAccBalance} MOVE</span></div> :
-                                        <div>User's Token Balance: HAVE NOT BEEN CREATED</div>
+                                        <div>User's Token Balance: <span className="text-yellow-600 font-bold">HAVE NOT BEEN CREATED</span></div>
                                 }
                             </div>
 
