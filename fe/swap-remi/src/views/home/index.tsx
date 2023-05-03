@@ -173,18 +173,23 @@ export const HomeView: FC = ({ }) => {
         }
         const program = await getProgram(idl, PROGRAM_ID, provider);
 
-        let userTokenAcc
-        if (wallet.publicKey != null) {
-            userTokenAcc = await getAssociatedTokenAddress(
-                mintTokenAcc,
+        const tx = new web3.Transaction()
+        if (userTokenAccBalance < 0) {
+            if (wallet.publicKey == null) {
+                return;
+            }
+            tx.add(createAssociatedTokenAccountInstruction(
                 wallet.publicKey,
-                true,
+                userTokenAcc,
+                wallet.publicKey,
+                mintTokenAcc,
                 TOKEN_PROGRAM_ID,
                 ASSOCIATED_TOKEN_PROGRAM_ID
             )
+            )
         }
 
-        const tx = new web3.Transaction().add(
+        tx.add(
             await program.methods.deposit(
                 new BN(solLiquidityAmount * LAMPORTS_PER_SOL),
                 new BN(tokenLiquidityAmount * Math.pow(10, tokenDecimals))
@@ -319,7 +324,7 @@ export const HomeView: FC = ({ }) => {
             <div className="ml-20 mt-5 grid gap-4 mb-5">
                 <div className="font-bold text-3xl">How to use</div>
                 <div>1. Connect Phantom wallet</div>
-                <div>2. Get testnet SOL in <a href="https://solfaucet.com/" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
+                <div>2. Get testnet SOL in <a href="https://solfaucet.com/" target="_blank" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
                 <div>3. Swap SOL to get MOVE token, and vice versa through Swap Token Feature (you need to input token amount greater than 0)</div>
                 <div>4. Add SOL and MOVE liquidity token through Add Token Liquidity Feature (you need to input at least one token amount greater than 0)</div>
             </div>
@@ -381,7 +386,7 @@ export const HomeView: FC = ({ }) => {
                                 <button onClick={handleSwap} className="bg-amber-300">SWAP</button>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             }
