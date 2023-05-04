@@ -68,7 +68,7 @@ export const HomeView: FC = ({ }) => {
 
     const getPoolWalletSolBalance = async () => {
         if (poolWalletSolAddr.toBase58() != 'DQcBo1bqW799kN6PnNVHyDDWToMp4C2vrLJgwMLDqtPZ') {
-            return connection.getBalance(poolWalletSolAddr)
+            return await connection.getBalance(poolWalletSolAddr)
         } else {
             return 0;
         }
