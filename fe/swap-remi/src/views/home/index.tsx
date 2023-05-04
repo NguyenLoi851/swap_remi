@@ -327,6 +327,7 @@ export const HomeView: FC = ({ }) => {
                 <div>2. Get testnet SOL in <a href="https://solfaucet.com/" target="_blank" className="hover:text-sky-400 underline hover:underline-offset-4">https://solfaucet.com/</a></div>
                 <div>3. Swap SOL to get MOVE token, and vice versa through Swap Token Feature (you need to input token amount greater than 0)</div>
                 <div>4. Add SOL and MOVE liquidity token through Add Token Liquidity Feature (you need to input at least one token amount greater than 0)</div>
+                <div className="text-rose-500 italic">Note: Reload page if some value of balance can not be loaded (default value is 0)</div>
             </div>
             <hr />
             <hr />
